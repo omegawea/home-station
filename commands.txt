@@ -1,0 +1,3 @@
+G:
+cd G:\Downloads\Program\Tests\homestation
+python main.py omegawea@gmail.com
