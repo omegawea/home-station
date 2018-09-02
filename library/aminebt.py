@@ -13,15 +13,21 @@ import wikipedia #https://pypi.org/project/wikipedia/
 import time
 import re
 import pandas
+from library.endecrytion import *
 #%%   
 #filename = 'amine.xlsx'
-args = sys.argv[1:]
+#args = sys.argv[1:]
 #%% 
 def getwikiseps(filename, index):
+#if True:
     septemplate = r'''\d+\D+\d+\D+(\d+)'''
     
-    aminenames = getxlsxtabs(filename, index)
+    # Retrieve sheet from google
+    aminenames = gettabs(filename, index)
+#    aminenames = gettabs(filename, index)
+    # Prepare amine dict
     aminestatuses = {}
+    # for each amine
     for aminename in aminenames:
 #        aminestatuses[aminename] = getwikiseps(aminename)
         
@@ -42,43 +48,50 @@ def getwikiseps(filename, index):
         seps = pandas.DataFrame(columns = ['EP', 'STATE'])
         seps.set_index('EP', inplace=True, drop=True)
         for seasoncode in seasoncodes:    
+            # Assume less than 10 seasons
             season = '0' + str(seasoncode[0])
+            # Separate Chapter into tables        
             tablecodes = seasoncode.split('<table class=\"')
+            # Retrieve episcodes from table 1
             epcodes = tablecodes[1].split('<th scope=\"row\" id=\"ep')[1:] #1st table only
+            # for each episcode
             for epcode in epcodes:
+                # search for ep number
                 episode = re.search(septemplate, epcode).group(1)
+                # if single digit
                 if len(episode) < 2:
+                    # add string 0 as suffix
                     episode = '0' + episode
-                pass
+                # Prepare dict with key = EP and value = STATE
                 seps.loc['S' + season + 'E' + episode] = {'STATE' : 'NONE'} #1st match only
     #            seps['S' + season + 'E' + episode] = 
 #        return seps
+        # Prepare amine status dict with key = Amine Name and value = Season EP list
         aminestatuses[aminename] = seps
+    # Return amine dict
     return aminestatuses
 #%% 
-def getxlsxseps(filename, index):
-    sheets, tabs = fmxlsx(filename, index)   
+def getsheetseps(filename, index):
+    sheets, tabs = gettabsheets(filename, index)   
     statuses = {}
     for tab in tabs:
         statuses[tab] = sheets[tab]
     return statuses
 #%%
-#def setxlsx(filename, index, sheet, row, value):
-#    return updatexlsx(filename, sheets)
-#%%
-def setxlsxbyaminecode(filename, index, aminecode, status):    
+def setsheetsbyaminecode(filename, index, aminecode, status):    
     # Retrieve Ep & Sheet
     ep = aminecode.split('.')[-1]
     aminename = aminecode.replace('.' + ep, '')
     aminename = aminename.replace('.', ' ')
-    
-    sheets, tabs = fmxlsx(filename, index)    
-    sheets[aminename].loc[sheets[aminename].index.isin([ep]), 'STATE'] = status    
-    
-    return updatexlsx(filename, index, sheets)
+    # Reload sheets
+    sheets, tabs = gettabsheets(filename, index)        
+    # Update specific cell
+    sheets[aminename].loc[sheets[aminename].index.isin([ep]), 'STATE'] = status        
+    # Update sheets
+    return updatesheets(filename, index, sheets)
 #%%
-def getaminetasksbyxlsx(filename, index):
-    sheets, tabs = fmxlsx(filename, index)
+def getaminetasksbysheets(filename, index):
+    sheets, tabs = gettabsheets(filename, index)
     # Filter out the relevent items from dict            
     aminestatuses = {}
     for aminename in tabs:
@@ -94,22 +107,23 @@ prev = 'SEED'
 def aminebt(filename): 
     global prev
     index = 'EP'
-    hostname = 'https://yourbittorrent.com'
+    hostname = 'https://' + decrypt('dt8wgnyytwwjsy.htr')
     seedtemplate = r'''<a href=\"(/torrent/\d+/[\w.-]+)\">[\w -]+<font color=\#ccc>[\w-]+</font></a></div><div style=float:right><i class=\"fa fa-check\" style=color:green data-toggle=\"tooltip\" title=\"Torrent Verified\"></i></div></td><td class=s>\d+ MB</td><td class=t>\d+/\d+/\d+</td><td class=u>(\d+)</td><td class=d>(\d+)</td></tr>'''
     dltemplate = r'''(/down/\d+.torrent)'''
     
     if prev == 'SEED':
+#    if False:
         prev = 'LIST'
         xprint (prev)
         # Update and Merge status from wiki to xlsx
         newstatuses = getwikiseps(filename, index)
-        oldstatuses = getxlsxseps(filename, index)
+        oldstatuses = getsheetseps(filename, index)
         joinstatusus(filename, index, oldstatuses, newstatuses)
     else:
         prev = 'SEED'
         xprint (prev)
         # Encode status into tasks
-        aminestatuses = getaminetasksbyxlsx(filename, index)    
+        aminestatuses = getaminetasksbysheets(filename, index)    
         match = {}
         for aminecode, aminestatus in aminestatuses.items():
             if 'LAST' not in aminestatuses.values():
@@ -121,17 +135,21 @@ def aminebt(filename):
                     dlurl = hostname + (re.search(dltemplate, urlcode))[1]
                     dltorrent(dlurl)  
                     xprint (aminecode, 'is downloading...')
-                    setxlsxbyaminecode(filename, index, aminecode, 'SENT')
+                    setsheetsbyaminecode(filename, index, aminecode, 'SENT')
                     aminestatuses[aminecode] = 'SENT'
                 else:
-                    setxlsxbyaminecode(filename, index, aminecode, 'LAST')
+                    setsheetsbyaminecode(filename, index, aminecode, 'LAST')
                     aminestatuses[aminecode] = 'LAST'
                 return aminestatuses
             elif aminestatus == 'LAST':
-                setxlsxbyaminecode(filename, index, aminecode, 'NONE')
+                setsheetsbyaminecode(filename, index, aminecode, 'NONE')
                 aminestatuses[aminecode] = 'NONE'
         return aminestatuses
 #%%
 #filename = 'amine.xlsx'
 ##temp1, temp2 = aminebt(filename)
 #temp = aminebt(filename)
+##hostname = 'bbs.cantonese.asia/'
+#encry = encrypt('1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc')
+#print (encry)
+#print (decrypt('myyu://ggx.hfsytsjxj.fxnf/'))

@@ -21,29 +21,15 @@ from ffmpy import FFmpeg
 
 from library.utility import *
 from library.youtubes import *
-from privacy.endecrytion import *
+from library.endecrytion import *
 #%%
-hostname = decrypt('myyu://ggx.hfsytsjxj.fxnf/')
-#print (hostname)
-topic = 'forum-118-1.html'
-urlcode = urlsource(hostname + topic)
-topictemplate = r'''a href=\"(\S+)\" onclick=\"atarget\(this\)\" class=\"s xst\">\w+\s+%s\s+(\w+)-(\w+)-(\w+)</a>'''
-posttemplate = r'''<a href=\"(https://u\d+.pipipan.com/fs/\d+-\d+)\"'''
 pydir = os.getcwd() + '\\'
 
 radiocodes = ['十八樓C座', '光明頂']
-code2list = {
-        '十八樓C座': '18F.Block.C.', 
-        '光明頂'   : 'Summit.',
-             }
 zipsuffixes = {
         '十八樓C座'    : '-1230-1300.zip',
         '光明頂'       : '-2300-0000.zip',
         }
-radiostitles = {
-    '1300.wma' : '18F.Block.C.',
-    '0000.mp3' : 'Summit.',
-    }
 
 RadioProcesses = None
 rplist = [
@@ -127,6 +113,10 @@ def radioconv():
                 xprint (e)
 #%%            
 def radiounziprename():
+    radiostitles = {
+        '1300.wma' : '18F.Block.C.',
+        '0000.mp3' : 'Summit.',
+        }
     xprint ('Radio Unzip and Rename Process...')
     zfiles = os.listdir('.')
     time.sleep(3)
@@ -190,9 +180,26 @@ def radioul():
 #%%
 def radiodl():
     xprint ('Radio Download Process...')
+    hostname = 'http://' + decrypt('ggx.hfsytsjxj.fxnf/')
+    topic = 'forum-118-1.html'
+    urlcode = urlsource(hostname + topic)
+    
+    topictemplate = r'''a href=\"(\S+)\" onclick=\"atarget\(this\)\" class=\"s xst\">\w+\s+%s\s+(\w+)-(\w+)-(\w+)</a>'''
+    posttemplate = r'''<a href=\"(https://u\d+.pipipan.com/fs/\d+-\d+)\"'''
+    
+    code2list = {
+            '十八樓C座': '18F.Block.C.', 
+            '光明頂'   : 'Summit.',
+                 }
+    
     global RadioProcesses
 #if True:
-    nexttime = datetime.datetime.now() + datetime.timedelta(hours = 2)
+    now = datetime.datetime.now()
+    nexttime = now + datetime.timedelta(hours = 1)
+    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 2)
+    RadioProcesses['radiounziprename'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 3)
     RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     # load playlist from youtube
     try:
@@ -246,10 +253,10 @@ def radioeps(youtubeacc):
             setrpstatus(rpname, STATUS['RUN'])
 #            RadioProcesses[rpname] = HomeProcess(globals()[rpname](), datetime.time(00, 00, 00), 300)
             if rpname == 'radioconv':
-                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(0, 0, 0), 300)
+                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 300)
             if rpname == 'radiounziprename':
-                RadioProcesses['radiounziprename'] = HomeProcess(radiounziprename, datetime.time(0, 0, 0), 300)
+                RadioProcesses['radiounziprename'] = HomeProcess(radiounziprename, datetime.time(8, 0, 0), 300)
             elif rpname == 'radioul':
-                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(0, 0, 0), 3600)
+                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600)
             elif rpname == 'radiodl':
                 RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 3600 * 24)

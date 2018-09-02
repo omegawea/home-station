@@ -14,12 +14,19 @@ import sys
 from library.utility import *
 from library.aminebt import *
 from library.radioeps import *
-#%%
-filename = 'amine.xlsx'
+##%%
+#filename = 'amine.xlsx'
+#aminebt(filename)
+#dfs = getsheets(filename, 'EP')
+#data = []
+#for key, df in dfs.items():
+#    for index, row in df.itertuples():
+#        data.append([index, row])
 #%% 
 def initHome(args):
     HomeProcesses = {}
-    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 1800, filename)
+#    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 1800, filename)
+    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 1800, SPREADSHEET_ID)
     HomeProcesses['radioeps'] = HomeProcess(radioeps, datetime.time(0, 0, 0), 3600 * 12, args[1])
     return HomeProcesses
 #%%

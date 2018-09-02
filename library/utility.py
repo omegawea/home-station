@@ -5,13 +5,20 @@ Created on Sun Aug 26 19:09:19 2018
 @author: SF
 """
 #%%
+from __future__ import print_function
+#from googleapiclient import discovery
+from googleapiclient.discovery import build
+from httplib2 import Http
+from oauth2client import file, client, tools
+#%%
+import threading 
 from threading import Event
 from threading import Thread
 import pandas
 import datetime
-import threading 
 import time
 import requests
+from library.endecrytion import *
 #%%
 import os
 from selenium import webdriver
@@ -19,6 +26,46 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+#%%
+# If modifying these scopes, delete the file token.json.
+SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
+
+# The ID and range of a sample spreadsheet.
+#SPREADSHEET_ID = '1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc'
+SPREADSHEET_ID = decrypt('1sjfouea1dtpb9mdu1b4n8jmh7f9a3-hx5no53jnjrjh')
+VALUE_INPUT_OPTION = 'USER_ENTERED'
+INSERT_DATA_OPTION = 'INSERT_ROWS'
+SHEET_ID = 'DATE'
+RANGE_NAME = '%s!A1'
+
+
+"""Shows basic usage of the Sheets API.
+Prints values from a sample spreadsheet.
+""" 
+store = file.Storage("token.json")
+creds = store.get()
+if not creds or creds.invalid:
+    flow = client.flow_from_clientsecrets("credentials.json", SCOPES)
+    creds = tools.run_flow(flow, store)
+service = build('sheets', 'v4', http=creds.authorize(Http()))
+
+#%%
+def add_sheet(sheetname, columnCount):
+    body = {
+        'requests': [{
+                'addSheet': {
+                        "properties": {    
+                                "title": sheetname,
+                                "gridProperties":  {
+                                                    "rowCount": 1,
+                                                    "columnCount": columnCount
+                                                  },                   
+                           }
+                    }
+        }]
+    }
+    batch_update_response = service.spreadsheets() \
+        .batchUpdate(spreadsheetId=SPREADSHEET_ID, body=body).execute()
 #%%
 STATUS = {
         'FAIL': -1,
@@ -37,40 +84,115 @@ def urlsource(url):
     r = requests.get(url)
     return r.text
 #%%
-def fmxlsx(filename, index):
-    xlsx = pandas.read_excel(filename, None)
-    # Extract aminenames into dict
-    sheets = {}
-    tabs = []
-    for tab, sheet in xlsx.items():
-        sheets[tab] = sheet
-        sheets[tab].set_index(index, inplace=True, drop=True)
-        tabs.append(tab)
-    return sheets, tabs  
+def gettabsheets(filename, index):    
+    # if file is excel
+    if filename.endswith('.xlsx'):                
+        xlsx = pandas.read_excel(filename, None)
+        # Extract aminenames into dict
+        sheets = {}
+        tabs = []
+        for tab, sheet in xlsx.items():
+            sheets[tab] = sheet
+            sheets[tab].set_index(index, inplace=True, drop=True)
+            tabs.append(tab)
+        return sheets, tabs  
+    # file is google sheet
+    else:
+        # Extract aminenames into dict
+        SPREADSHEET_ID = filename
+        tabs = gettabs(filename, index)
+        sheets = {}
+        for tab in tabs:
+            RANGE_NAME = '%s!A1:B'%tab
+            result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID,
+                                                        range=RANGE_NAME).execute()
+            # df column name
+            header = result.get('values', [])[0]
+            # df data
+            values = result.get('values', [])[1:]  # Everything else is data.
+            all_data = []
+            for col_id, col_name in enumerate(header):
+                column_data = []
+                for row in values:
+                    column_data.append(row[col_id])
+                ds = pandas.Series(data=column_data, name=col_name)
+                all_data.append(ds)
+            df = pandas.concat(all_data, axis=1)
+            df.set_index(index, inplace=True, drop=True)            
+            sheets[tab] = df            
+        return sheets, tabs
+#filename = '1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc'
+##filename = 'amine.xlsx'
+#index = 'EP'
+#sheets, tabs = gettabsheets(filename, index)
 #%%
-def getxlsxtabs(filename, index):        
-    sheets, tabs = fmxlsx(filename, index)
-    return tabs
+#def getxlsxtabs(filename, index):        
+#    sheets, tabs = gettabsheets(filename, index)
+#    return tabs
+def gettabs(filename, index):
+    # if file is excel
+    if filename.endswith('.xlsx'):        
+        sheets, tabs = gettabsheets(filename, index)
+        return tabs
+    # file is google sheet
+    else:
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=filename).execute()
+        sheets = sheet_metadata.get('sheets', '')
+        tabs = []
+        for sheet in sheets:
+            tab = sheet.get("properties", {}).get("title", "Sheet1")
+            sheet_id = sheet.get("properties", {}).get("sheetId", 0) 
+            tabs.append(tab)
+        return tabs
 #%%
-def getxlsxsheets(filename, index):        
-    sheets, tabs = fmxlsx(filename, index)
-    return sheets  
+def getsheets(filename, index):   
+    # if file is excel
+    if filename.endswith('.xlsx'):    
+        sheets, tabs = gettabsheets(filename, index)
+        return sheets  
+    # file is google sheet
+    else:
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=filename).execute()
+        return sheet_metadata.get('sheets', '')
 #%%
-def updatexlsx(filename, index, sheets):     
-    temp, aminenames = fmxlsx(filename, index)       
-    # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pandas.ExcelWriter(filename, engine='xlsxwriter')
-    for tab, sheet in sheets.items():                    
-        sheet.to_excel(writer, sheet_name = tab)
-    # Close the Pandas Excel writer and output the Excel file.
-    writer.save()    
+def updatesheets(filename, index, sheets):
+    # if file is excel
+    temp, aminenames = gettabsheets(filename, index)    
+    if filename.endswith('.xlsx'):    
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        writer = pandas.ExcelWriter(filename, engine='xlsxwriter')
+        for tab, sheet in sheets.items():                    
+            sheet.to_excel(writer, sheet_name = tab)
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()    
+#        return sheets  
+    # file is google sheet
+    else:
+#    if True:
+        data = []
+        for tab, sheet in sheets.items():
+            values = []
+            for index, row in sheet.itertuples():
+                values.append([index, row])            
+            data.append({
+                    'range': '%s!A2:Z'%tab,
+                    'values': values
+                    })        
+        body = {
+            'valueInputOption': VALUE_INPUT_OPTION,
+            'data': data
+        }
+        filename = SPREADSHEET_ID
+        result = service.spreadsheets().values().batchUpdate(
+            spreadsheetId=filename, body=body).execute()
+        print('{0} cells updated.'.format(result.get('updatedCells')));
     return sheets  
 #%%
 def joinstatusus(filename, index, f_status, *statuses):
     if len(statuses) == 1:
         for key, sheet in f_status.items(): 
             f_status[key] = f_status[key].combine_first(statuses[0][key])
-    return updatexlsx(filename, index, f_status)
+    return updatesheets(filename, index, f_status)
 #%%
 class Future(object):
     def __init__(self):
