@@ -11,17 +11,16 @@ video/TEMPERORY
 """
 #%%
 import sys
-from utility import *
-from aminebt import *
-from radiodl import *
+from library.utility import *
+from library.aminebt import *
+from library.radioeps import *
 #%%
 filename = 'amine.xlsx'
 #%% 
 def initHome(args):
     HomeProcesses = {}
-    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(00, 00, 00), 1800, filename)
-    HomeProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(10, 00, 00), 3600 * 12, args[1])
-#    HomeProcesses['radiodl'] = HomeProcess(radiodl, 60, args[1])
+    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 1800, filename)
+    HomeProcesses['radioeps'] = HomeProcess(radioeps, datetime.time(0, 0, 0), 3600 * 12, args[1])
     return HomeProcesses
 #%%
 def startHome(HomeProcesses):
@@ -67,3 +66,32 @@ if __name__ == '__main__':
 #
 ## share the sheet with your friend
 #sh.share("myFriend@gmail.com")
+##%%
+##import subprocess
+##subprocess.call("killall chrome.exe", shell=True)
+#import os
+#print (os.system("taskkill /f /im  chrome.exe"))
+#
+##%%       
+#radiopage = explorer('http://bbs.cantonese.asia/')
+##%%
+#radiopage.browse()
+##%%
+#radiopage.kill()
+##element = driver.find_element_by_id("free_down_link").click()
+### Target to downloads folder
+##while not any(file.endswith(zipsuffixes[radiocode]) for file in os.listdir('.')):            
+##pass # Wait until file is downloaded            
+### Unzip and Move Files
+###                radiounziprename()
+##  
+##  
+#  
+#  
+  
+  
+  
+  
+  
+  
+  
