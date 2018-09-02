@@ -31,8 +31,8 @@ from selenium.webdriver.chrome.options import Options
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
 
 # The ID and range of a sample spreadsheet.
-#SPREADSHEET_ID = '1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc'
-SPREADSHEET_ID = decrypt('1sjfouea1dtpb9mdu1b4n8jmh7f9a3-hx5no53jnjrjh')
+SPREADSHEET_ID = '1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc'
+#SPREADSHEET_ID = decrypt('1sjfouea1dtpb9mdu1b4n8jmh7f9a3-hx5no53jnjrjh')
 VALUE_INPUT_OPTION = 'USER_ENTERED'
 INSERT_DATA_OPTION = 'INSERT_ROWS'
 SHEET_ID = 'DATE'
@@ -99,12 +99,17 @@ def gettabsheets(filename, index):
     # file is google sheet
     else:
         # Extract aminenames into dict
-        SPREADSHEET_ID = filename
-        tabs = gettabs(filename, index)
+        sheet_metadata = service.spreadsheets().get(spreadsheetId=filename).execute()
+        sheets = sheet_metadata.get('sheets', '')
+        tabs = []
+        for sheet in sheets:
+            tab = sheet.get("properties", {}).get("title", "Sheet1")
+            sheet_id = sheet.get("properties", {}).get("sheetId", 0) 
+            tabs.append(tab)
         sheets = {}
         for tab in tabs:
             RANGE_NAME = '%s!A1:B'%tab
-            result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID,
+            result = service.spreadsheets().values().get(spreadsheetId=filename,
                                                         range=RANGE_NAME).execute()
             # df column name
             header = result.get('values', [])[0]
@@ -121,39 +126,14 @@ def gettabsheets(filename, index):
             df.set_index(index, inplace=True, drop=True)            
             sheets[tab] = df            
         return sheets, tabs
-#filename = '1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc'
-##filename = 'amine.xlsx'
-#index = 'EP'
-#sheets, tabs = gettabsheets(filename, index)
 #%%
-#def getxlsxtabs(filename, index):        
-#    sheets, tabs = gettabsheets(filename, index)
-#    return tabs
-def gettabs(filename, index):
-    # if file is excel
-    if filename.endswith('.xlsx'):        
-        sheets, tabs = gettabsheets(filename, index)
-        return tabs
-    # file is google sheet
-    else:
-        sheet_metadata = service.spreadsheets().get(spreadsheetId=filename).execute()
-        sheets = sheet_metadata.get('sheets', '')
-        tabs = []
-        for sheet in sheets:
-            tab = sheet.get("properties", {}).get("title", "Sheet1")
-            sheet_id = sheet.get("properties", {}).get("sheetId", 0) 
-            tabs.append(tab)
-        return tabs
+def gettabs(filename, index):      
+    sheets, tabs = gettabsheets(filename, index)
+    return tabs
 #%%
-def getsheets(filename, index):   
-    # if file is excel
-    if filename.endswith('.xlsx'):    
-        sheets, tabs = gettabsheets(filename, index)
-        return sheets  
-    # file is google sheet
-    else:
-        sheet_metadata = service.spreadsheets().get(spreadsheetId=filename).execute()
-        return sheet_metadata.get('sheets', '')
+def getsheets(filename, index):    
+    sheets, tabs = gettabsheets(filename, index)
+    return sheets  
 #%%
 def updatesheets(filename, index, sheets):
     # if file is excel

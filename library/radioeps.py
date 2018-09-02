@@ -148,7 +148,7 @@ def radiounziprename():
 def radioul():
     xprint ('Radio Upload Process...')
     global RadioProcesses
-    nexttime = datetime.datetime.now() + datetime.timedelta(hours = 22)
+    nexttime = datetime.datetime.now() + datetime.timedelta(hours = 12)
     RadioProcesses['radiodl'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     # load playlist from youtube
     try:
@@ -195,11 +195,11 @@ def radiodl():
     global RadioProcesses
 #if True:
     now = datetime.datetime.now()
-    nexttime = now + datetime.timedelta(hours = 1)
-    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 2)
-    RadioProcesses['radiounziprename'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     nexttime = now + datetime.timedelta(hours = 3)
+    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 4)
+    RadioProcesses['radiounziprename'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 5)
     RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     # load playlist from youtube
     try:

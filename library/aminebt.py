@@ -131,7 +131,8 @@ def aminebt(filename):
                 match[aminecode] = re.findall(seedtemplate, urlcode)
                 xprint (aminecode, ' : ', len(match[aminecode]))
                 if(len(match[aminecode]) > 0):
-                    urlcode = urlsource(hostname + match[aminecode][match[aminecode][3].index(max(match[aminecode][3]))][0])        
+                    # choose the torrent with maximum seed
+                    urlcode = urlsource(hostname + match[aminecode][match[aminecode][3].index(max(match[aminecode][3]))][0])
                     dlurl = hostname + (re.search(dltemplate, urlcode))[1]
                     dltorrent(dlurl)  
                     xprint (aminecode, 'is downloading...')
