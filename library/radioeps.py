@@ -200,8 +200,6 @@ def radiodl():
     except Exception as e:
         xprint (e)
         return
-    
-    return 0
     # Initialize source address and matches
     matches = {}
     # loop target radio codes
