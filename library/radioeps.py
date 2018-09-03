@@ -31,7 +31,7 @@ zipsuffixes = {
         '光明頂'       : '-2300-0000.zip',
         }
 
-RadioProcesses = None
+RadioProcesses = {}
 rplist = [
         'radioconv',
         'radiounziprename',
@@ -50,18 +50,22 @@ def getrpstatus(name):
     return None
 #%%            
 def radiounziprename():
+    xprint ('Radio Unzip and Rename Process...')
+    # Parameters
     radiostitles = {
         '1300.wma' : '18F.Block.C.',
         '0000.mp3' : 'Summit.',
         }
-    xprint ('Radio Unzip and Rename Process...')
+    # browse all files
     zfiles = os.listdir('.')
     time.sleep(3)
     # loop target radio codes
     for radiocode in radiocodes:
+        # loop through all zip file
         for zfile in zfiles:
+            # radio code at suffix
             if zfile.endswith(zipsuffixes[radiocode]):
-                # Unzip and Del
+                # Unzip the file folder
                 zref = zipfile.ZipFile(zfile, 'r')
                 zref.extractall()
                 zref.close()
@@ -69,25 +73,72 @@ def radiounziprename():
                 radiofilespath = zfile.replace('.zip', '') + '\\'
                 radiofiles = os.listdir(radiofilespath)
                 for radiofile in radiofiles:
+                    # prepare suitable name
                     string = radiofile.split('-')
                     title = radiostitles[string[-1]]
                     date = string[1][:4] + '-' + string[1][4:6] + '-' + string[1][6:]   
                     newname = title + date + radiofile[-4:]
+                    # Rename and move, otherwise, del if exists
                     try:
                         os.rename(radiofilespath + radiofile, radiofilespath + newname)                        
                         shutil.move(radiofilespath + newname, pydir)
                     except Exception as e:
                         xprint (e)
                         os.remove(radiofilespath + newname)  
+                # del the zip file
                 os.remove(zfile)
+                # del the unzip folder
                 shutil.rmtree(radiofilespath)   
 #%%
-def radioconv():
+def radioul():    
+    xprint ('Radio Upload Process...')
+    # load playlist from youtube
+    try:
+        playlist = listvdos()
+    except Exception as e:
+        xprint (e)
+        return
+    # Upload mp4 to youtube
+    files = os.listdir('.')
+    for file in files:
+        # focus on mp4 file for youtube
+        if file.endswith('.mp4'):
+            # see if it is not in youtube
+            if file not in playlist:
+                # start to upload
+                try:
+                    uploadvdo(['--file=%s'%(file), '--title=%s'%(file)])
+                    # remove if success
+                    try:
+                        os.remove(file)
+                    except Exception as e:
+                        xprint (e)
+                except Exception as e:
+                    xprint (e)
+            else:
+                xprint ('%s exists in Youtube.'%file)
+#        else:
+#            xprint ('No mp4 files...')
+    # Remove oauth json
+    files = os.listdir(".")
+    for file in files:
+        if file.startswith('--file=') and file.endswith('-oauth2.json'):
+            try:
+                os.remove(file)
+            except Exception as e:
+                xprint (e)         
+#%%
+def radioconv():        
     xprint ('Radio Conversion Process...')
+    # initialize upload process if not exist
+    global RadioProcesses
+    if 'radioul' not in RadioProcesses:
+        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(6, 30, 0), 3600 * 24)
     radiounziprename()
     # Convert mp3 to x2 mp3
     files = os.listdir('.')
     for file in files:
+        # see if Summit file exists but not the x2 version
         if file.startswith('Summit.') and file.endswith('.mp3') and not file.endswith('x2.mp3'):
             #for %a in (Summit.*.mp3) do ffmpeg -i %a -filter:a "atempo=2.0" %a".mp3"           
             string = file.split('-')
@@ -95,23 +146,25 @@ def radioconv():
                     inputs={file: None},
                     outputs={file[:-4] +'x2.mp3': '-filter:a \"atempo=2.0\"'}
                     )
-            ff.cmd
+            ff.cmd            
             try:
                 ff.run()
             except Exception as e:
                 xprint (e)
+            # move x1 version to destination
             try:
                 shutil.move(file, '\\\\GBE_NAS\\music')
             except Exception as e:
                 xprint (e)
+            # remove x1 version if exist
             try:
                 os.remove(file)
             except Exception as e:
                 xprint (e)
-#            os.rename(file[:-4] +'x2.mp3', file[:-4] +'.mp3')
     # Convert wma to mp3
     files = os.listdir('.')
     for file in files:
+        # search for wma (18 block C) file
         if file.endswith('.wma'):
             #for %a in (*.wma) do ffmpeg -i %a -ab 32 %a".mp3"  
             ff = FFmpeg(
@@ -123,6 +176,7 @@ def radioconv():
                 ff.run()
             except Exception as e:
                 xprint (e)
+            # remove the file after conversion
             try:
                 os.remove(file)
             except Exception as e:
@@ -141,55 +195,19 @@ def radioconv():
                 ff.run()
             except Exception as e:
                 xprint (e)
+            # remove the file after conversion
             try:
                 os.remove(file)
             except Exception as e:
                 xprint (e)
-#%%
-def radioul():
-    xprint ('Radio Upload Process...')
-    
-    global RadioProcesses
-#if True:
-    now = datetime.datetime.now()
-#    nexttime = now + datetime.timedelta(hours = 3)
-#    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-#    nexttime = now + datetime.timedelta(hours = 5)
-#    RadioProcesses['radiodl'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 3)
-    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 1)
-    RadioProcesses['radiodl'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    # load playlist from youtube
-    try:
-        playlist = listvdos()
-    except Exception as e:
-        xprint (e)
-        return
-    # Upload mp4 to youtube
-    files = os.listdir('.')
-    for file in files:
-        if file.endswith('.mp4'):
-            if file not in playlist:
-                try:
-                    uploadvdo(['--file=%s'%(file), '--title=%s'%(file)])
-                except Exception as e:
-                    xprint (e)
-            try:
-                os.remove(file)
-            except Exception as e:
-                xprint (e)
-    # Remove oauth json
-    files = os.listdir(".")
-    for file in files:
-        if file.startswith('--file=') and file.endswith('-oauth2.json'):
-            try:
-                os.remove(file)
-            except Exception as e:
-                xprint (e)         
 #%%
 def radiodl():
     xprint ('Radio Download Process...')
+    # initialize File conversion process if not exist
+    global RadioProcesses    
+    if 'radioconv' not in RadioProcesses:
+        RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(6, 0, 0), 3600 * 24)
+    # initialize parameters
     hostname = 'http://' + decrypt('ggx.hfsytsjxj.fxnf/')
     topic = 'forum-118-1.html'
     urlcode = urlsource(hostname + topic)
@@ -200,27 +218,14 @@ def radiodl():
     code2list = {
             '十八樓C座': '18F.Block.C.', 
             '光明頂'   : 'Summit.',
-                 }
-    
-    global RadioProcesses
-#if True:
-    now = datetime.datetime.now()
-#    nexttime = now + datetime.timedelta(hours = 3)
-#    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-#    nexttime = now + datetime.timedelta(hours = 5)
-#    RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 3)
-    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 1)
-    RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    
+                 }        
     # load playlist from youtube
     try:
         playlist = listvdos()
     except Exception as e:
         xprint (e)
-        return
-    # Initialize source address and matches
+        return    
+    # Initialize source address and matches    
     matches = {}
     # loop target radio codes
     for radiocode in radiocodes:
@@ -232,14 +237,21 @@ def radiodl():
         for match in matches[radiocode]:
             # check if radio ep exists in youtube
             ep = (code2list[radiocode] + '-'.join(match[1:4]) + '.mp4')
-            if ep not in playlist:
-                xprint ('Downloading %s'%ep)                
-                postlink = re.search(posttemplate, urlsource(match[0])).group(1)
+            # if ep exists in youtube or its file exists
+            if (ep not in playlist) or any((file.endswith(zipsuffixes[radiocode]) and (''.join(match[1:4]) in file)) for file in os.listdir('.')):
+                # launch explorer
                 explorer = Chrome()
+                xprint ('Downloading %s'%ep)
+                # search the link from the page
+                postlink = re.search(posttemplate, urlsource(match[0])).group(1)
+                # browse the extracted link
                 explorer.browse(postlink)
+                # click the link
                 explorer.click_by_id('''free_down_link''')
-                while not any(file.endswith(zipsuffixes[radiocode]) for file in os.listdir('.')):            
-                    pass # Wait until file is downloaded
+                # wait until file exists
+                while not any((file.endswith(zipsuffixes[radiocode]) and (''.join(match[1:4]) in file)) for file in os.listdir('.')): pass
+                xprint ('%s File Found...'%ep)
+                # close the explorer
                 explorer.kill()     
     # Delete Unconfirmed....crdownload files if any
     files = os.listdir('.')
@@ -251,29 +263,16 @@ def radiodl():
                 xprint (e)
 #%%
 def radioeps(youtubeacc):
-    global RadioProcesses
     try:        
         setyoutubeacc(youtubeacc)
         xprint ('Selected Youtube Account.')
     except Exception as e:
         xprint (e)
         return
-    RadioProcesses = {}
-#    print (globals())
-    for rpname in rplist:
-        rpstatus = getrpstatus(rpname)
-        if rpstatus == None:
-            setrpstatus(rpname, STATUS['RUN'])
-#            RadioProcesses[rpname] = HomeProcess(globals()[rpname](), datetime.time(00, 00, 00), 300)
-#            if rpname == 'radioconv':
-#                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 300)
-#            elif rpname == 'radioul':
-#                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600)
-#            elif rpname == 'radiodl':
-#                RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 3600 * 24)
-            if rpname == 'radioconv':
-                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 3600 * 6)
-            elif rpname == 'radioul':
-                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600 * 24)
-            elif rpname == 'radiodl':
-                RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 300)
+        
+    global RadioProcesses
+    if 'radiodl' not in RadioProcesses:
+        RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(5, 0, 0), 3600 * 24)
+
+#    if 'radioul' not in RadioProcesses:
+#        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(5, 10, 0), 3600 * 24)

@@ -28,6 +28,7 @@ from apiclient.errors import HttpError
 from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
+#from oauth2client.tools import argparser, run_flow
 from oauth2client.tools import argparser#, run_flow
 
 from library.tools import run_flow
@@ -266,7 +267,7 @@ def setyoutubeacc(acc):
         #credentials = flow.run_console()
         set_google_account(acc)
         flow.set_google_account(acc)   
-        credentials = flow.run_local_server()        
+        credentials = flow.run_local_server()
         youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials = credentials)
         
 def getyoutubeacc(): 

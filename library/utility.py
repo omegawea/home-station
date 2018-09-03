@@ -213,17 +213,17 @@ class HomeProcess(object):
     def start(self):
         if not self.is_running:
               if self.next_call is None:
-                  today = datetime.datetime.now()
-                  self.next_call = datetime.datetime(today.year, today.month, today.day, self.begin.hour, self.begin.minute, 0)
-                  if self.next_call.timestamp() < time.time():
-                      self.next_call = datetime.datetime.now() + datetime.timedelta(seconds = 10)
-                  self.next_call = self.next_call.timestamp()
-                  self._timer = threading.Timer(self.next_call - time.time(), self._run)
+                  now = datetime.datetime.now()
+                  self.next_call = datetime.datetime(now.year, now.month, now.day, self.begin.hour, self.begin.minute, 0)
+                  if self.next_call < now:
+                      self.next_call = datetime.datetime.now() + datetime.timedelta(seconds = 60)
+                  self.next_call = self.next_call.timestamp()              
               else:
                   self.next_call += self.interval
-                  self._timer = threading.Timer(self.next_call - time.time(), self._run)
+              self._timer = threading.Timer(self.next_call - time.time(), self._run)
               self._timer.start()
               self.is_running = True
+              xprint ('%s schedules after %ds '%(self.function.__name__, self.next_call - time.time()))
               
     def reset(self, begin):
         self._timer.cancel()
@@ -241,6 +241,7 @@ class Chrome():
         # Killing until not found
         while (os.system("taskkill /f /im  chrome.exe") != 128): pass
         while (os.system("taskkill /f /im  chromedriver.exe") != 128): pass
+        time.sleep(3)
         # Target to .py folder
         self.options = Options()        
         self.options.add_argument("user-data-dir=C:\\Users\\%s\\AppData\\Local\\Google\\Chrome\\User Data"%(os.getlogin()))
@@ -290,6 +291,6 @@ class Chrome():
                 print (e)       
         
     def kill(self):
-        time.sleep(3)
+#        time.sleep(10)
         self.driver.quit()                  
     
