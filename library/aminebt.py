@@ -146,11 +146,3 @@ def aminebt(filename):
                 setsheetsbyaminecode(filename, index, aminecode, 'NONE')
                 aminestatuses[aminecode] = 'NONE'
         return aminestatuses
-#%%
-#filename = 'amine.xlsx'
-##temp1, temp2 = aminebt(filename)
-#temp = aminebt(filename)
-##hostname = 'bbs.cantonese.asia/'
-#encry = encrypt('1nEajpzv1yOkw9hyP1w4iuehC7A9v3-cS5Ij53EieMEc')
-#print (encry)
-#print (decrypt('myyu://ggx.hfsytsjxj.fxnf/'))

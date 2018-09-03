@@ -48,9 +48,43 @@ def getrpstatus(name):
     if name in rpstatus:
         return rpstatus[name]
     return None
+#%%            
+def radiounziprename():
+    radiostitles = {
+        '1300.wma' : '18F.Block.C.',
+        '0000.mp3' : 'Summit.',
+        }
+    xprint ('Radio Unzip and Rename Process...')
+    zfiles = os.listdir('.')
+    time.sleep(3)
+    # loop target radio codes
+    for radiocode in radiocodes:
+        for zfile in zfiles:
+            if zfile.endswith(zipsuffixes[radiocode]):
+                # Unzip and Del
+                zref = zipfile.ZipFile(zfile, 'r')
+                zref.extractall()
+                zref.close()
+                # Move and Del
+                radiofilespath = zfile.replace('.zip', '') + '\\'
+                radiofiles = os.listdir(radiofilespath)
+                for radiofile in radiofiles:
+                    string = radiofile.split('-')
+                    title = radiostitles[string[-1]]
+                    date = string[1][:4] + '-' + string[1][4:6] + '-' + string[1][6:]   
+                    newname = title + date + radiofile[-4:]
+                    try:
+                        os.rename(radiofilespath + radiofile, radiofilespath + newname)                        
+                        shutil.move(radiofilespath + newname, pydir)
+                    except Exception as e:
+                        xprint (e)
+                        os.remove(radiofilespath + newname)  
+                os.remove(zfile)
+                shutil.rmtree(radiofilespath)   
 #%%
 def radioconv():
     xprint ('Radio Conversion Process...')
+    radiounziprename()
     # Convert mp3 to x2 mp3
     files = os.listdir('.')
     for file in files:
@@ -111,44 +145,20 @@ def radioconv():
                 os.remove(file)
             except Exception as e:
                 xprint (e)
-#%%            
-def radiounziprename():
-    radiostitles = {
-        '1300.wma' : '18F.Block.C.',
-        '0000.mp3' : 'Summit.',
-        }
-    xprint ('Radio Unzip and Rename Process...')
-    zfiles = os.listdir('.')
-    time.sleep(3)
-    # loop target radio codes
-    for radiocode in radiocodes:
-        for zfile in zfiles:
-            if zfile.endswith(zipsuffixes[radiocode]):
-                # Unzip and Del
-                zref = zipfile.ZipFile(zfile, 'r')
-                zref.extractall()
-                zref.close()
-                # Move and Del
-                radiofilespath = zfile.replace('.zip', '') + '\\'
-                radiofiles = os.listdir(radiofilespath)
-                for radiofile in radiofiles:
-                    string = radiofile.split('-')
-                    title = radiostitles[string[-1]]
-                    date = string[1][:4] + '-' + string[1][4:6] + '-' + string[1][6:]   
-                    newname = title + date + radiofile[-4:]
-                    try:
-                        os.rename(radiofilespath + radiofile, radiofilespath + newname)                        
-                        shutil.move(radiofilespath + newname, pydir)
-                    except Exception as e:
-                        xprint (e)
-                        os.remove(radiofilespath + newname)  
-                os.remove(zfile)
-                shutil.rmtree(radiofilespath)   
 #%%
 def radioul():
     xprint ('Radio Upload Process...')
+    
     global RadioProcesses
-    nexttime = datetime.datetime.now() + datetime.timedelta(hours = 12)
+#if True:
+    now = datetime.datetime.now()
+#    nexttime = now + datetime.timedelta(hours = 3)
+#    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+#    nexttime = now + datetime.timedelta(hours = 5)
+#    RadioProcesses['radiodl'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 3)
+    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    nexttime = now + datetime.timedelta(hours = 1)
     RadioProcesses['radiodl'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     # load playlist from youtube
     try:
@@ -195,12 +205,15 @@ def radiodl():
     global RadioProcesses
 #if True:
     now = datetime.datetime.now()
+#    nexttime = now + datetime.timedelta(hours = 3)
+#    RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+#    nexttime = now + datetime.timedelta(hours = 5)
+#    RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
     nexttime = now + datetime.timedelta(hours = 3)
     RadioProcesses['radioconv'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 4)
-    RadioProcesses['radiounziprename'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
-    nexttime = now + datetime.timedelta(hours = 5)
+    nexttime = now + datetime.timedelta(hours = 1)
     RadioProcesses['radioul'].reset(datetime.time(nexttime.hour, nexttime.minute, nexttime.second))
+    
     # load playlist from youtube
     try:
         playlist = listvdos()
@@ -252,11 +265,15 @@ def radioeps(youtubeacc):
         if rpstatus == None:
             setrpstatus(rpname, STATUS['RUN'])
 #            RadioProcesses[rpname] = HomeProcess(globals()[rpname](), datetime.time(00, 00, 00), 300)
+#            if rpname == 'radioconv':
+#                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 300)
+#            elif rpname == 'radioul':
+#                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600)
+#            elif rpname == 'radiodl':
+#                RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 3600 * 24)
             if rpname == 'radioconv':
-                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 300)
-            if rpname == 'radiounziprename':
-                RadioProcesses['radiounziprename'] = HomeProcess(radiounziprename, datetime.time(8, 0, 0), 300)
+                RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(8, 0, 0), 3600 * 6)
             elif rpname == 'radioul':
-                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600)
+                RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(10, 0, 0), 3600 * 24)
             elif rpname == 'radiodl':
-                RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 3600 * 24)
+                RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(0, 0, 0), 300)

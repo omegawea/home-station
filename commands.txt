@@ -1,7 +1,0 @@
-Z:
-cd Z:\home-station
-python main.py omegawea@gmail.com
-
-Z:
-cd Z:\home-station
-python main.py mr.fongcl@gmail.com

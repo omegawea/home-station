@@ -4,4 +4,7 @@ library/endecrytion.py
 *.mp4
 *.mp3
 *.json
+*.tmp
+*.zip
+*.log
 amine.xlsx

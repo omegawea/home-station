@@ -290,5 +290,6 @@ class Chrome():
                 print (e)       
         
     def kill(self):
+        time.sleep(3)
         self.driver.quit()                  
     
