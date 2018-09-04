@@ -418,13 +418,13 @@ class InstalledAppFlow(Flow):
 
 #        if open_browser:
 #            webbrowser.open(auth_url, new=1, autoraise=True)
-#
-#        print(authorization_prompt_message.format(url=auth_url))        
+        
+#        print(authorization_prompt_message.format(url=auth_url))  
         
         explorer = Chrome()
         explorer.browse(auth_url)
         explorer.click_by_xpath('''//*[@data-email=\"{!s}\"]'''.format(self.google_account))
-        explorer.click_by_xpath('//div[@id=\"submit_approve_access\"]')
+        explorer.click_by_xpath('//div[@id=\"submit_approve_access\"]')        
         
         local_server.handle_request()
 

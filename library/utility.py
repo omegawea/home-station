@@ -216,7 +216,7 @@ class HomeProcess(object):
                   now = datetime.datetime.now()
                   self.next_call = datetime.datetime(now.year, now.month, now.day, self.begin.hour, self.begin.minute, 0)
                   if self.next_call < now:
-                      self.next_call = datetime.datetime.now() + datetime.timedelta(seconds = 60)
+                      self.next_call = datetime.datetime.now() + datetime.timedelta(seconds = 30)
                   self.next_call = self.next_call.timestamp()              
               else:
                   self.next_call += self.interval
@@ -263,34 +263,48 @@ class Chrome():
         pass
 
     def browse(self, link):
-        self.link = link        
-        self.driver.get(self.link)
+        try:
+            self.link = link        
+            self.driver.get(self.link)
+        except Exception as e:
+            xprint (e)
 
     def click_by_xpath(self, _xpath):
-#        time.sleep(10)
-        while True:
-            try:
-#                self.driver.find_element_by_xpath(_xpath).click()
-                self.element = WebDriverWait(self.driver, 10).until(
-                             EC.presence_of_element_located((By.XPATH, _xpath)))
-                self.element.click()
-                break
-            except Exception as e:
-                print (e)
+#        while True:
+        try:
+#            self.driver.find_element_by_xpath(_xpath).click()
+            self.element = WebDriverWait(self.driver, 10).until(
+                         EC.presence_of_element_located((By.XPATH, _xpath)))
+#            self.element.location_once_scrolled_into_view    
+            self.driver.execute_script("arguments[0].scrollIntoView();", self.element)        
+            actions = webdriver.ActionChains(self.driver)
+            actions.move_to_element(self.element).perform()
+#            time.sleep(5)
+            self.element.click()
+#            break
+        except Exception as e:
+            xprint (e)
         
     def click_by_id(self, _id):
-#        time.sleep(10)
-        while True:
-            try:
-#                self.driver.find_element_by_id(_id).click()
-                self.element = WebDriverWait(self.driver, 10).until(
-                             EC.presence_of_element_located((By.ID, _id)))
-                self.element.click()
-                break
-            except Exception as e:
-                print (e)       
+#        while True:
+        try:
+#            self.driver.find_element_by_id(_id).click()
+            self.element = WebDriverWait(self.driver, 10).until(
+                         EC.presence_of_element_located((By.ID, _id)))
+#            self.element.location_once_scrolled_into_view    
+            self.driver.execute_script("arguments[0].scrollIntoView();", self.element)        
+            actions = webdriver.ActionChains(self.driver)
+            actions.move_to_element(self.element).perform()
+#            time.sleep(5)
+            self.element.click()
+#            break
+        except Exception as e:
+            xprint (e)       
         
     def kill(self):
-#        time.sleep(10)
-        self.driver.quit()                  
+        try:
+#            time.sleep(10)
+            self.driver.quit()   
+        except Exception as e:
+            xprint (e)                      
     

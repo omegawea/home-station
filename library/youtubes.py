@@ -124,24 +124,6 @@ argparser.add_argument("--keywords", help="Video keywords, comma separated",
 argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES,
                        default=VALID_PRIVACY_STATUSES[1], help="Video privacy status.")
 
-def get_authenticated_service(args):
-    flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE, scope=YOUTUBE_UPLOAD_SCOPE, message=MISSING_CLIENT_SECRETS_MESSAGE)
-
-    storage = Storage("%s-oauth2.json" % sys.argv[0])
-    credentials = storage.get()
-
-    if credentials is None or credentials.invalid:
-        credentials = run_flow(flow, storage, args)
-        print ('Google Account Credentials is received.')
-
-    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, http=credentials.authorize(httplib2.Http()))
-
-## Authorize the request and store authorization credentials.
-#def get_authenticated_service():
-#  flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, YOUTUBE_LIST_SCOPE)
-#  credentials = flow.run_console()
-#  return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials = credentials)
-
 def get_my_uploads_list():
     # Retrieve the contentDetails part of the channel resource for the
     # authenticated user's channel.
@@ -269,11 +251,28 @@ def setyoutubeacc(acc):
         flow.set_google_account(acc)   
         credentials = flow.run_local_server()
         youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials = credentials)
+
+## Authorize the request and store authorization credentials.
+#def get_authenticated_service():
+#  flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, YOUTUBE_LIST_SCOPE)
+#  credentials = flow.run_console()
+#  return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials = credentials)
+def get_authenticated_service(args):
+    flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE, scope=YOUTUBE_UPLOAD_SCOPE, message=MISSING_CLIENT_SECRETS_MESSAGE)
+
+    storage = Storage("%s-oauth2.json" % sys.argv[0])
+    credentials = storage.get()
+
+    if credentials is None or credentials.invalid:
+        credentials = run_flow(flow, storage, args)
+        print ('Google Account Credentials is received.')
+
+    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, http=credentials.authorize(httplib2.Http()))
         
 def getyoutubeacc(): 
     return youtubeacc
     
-def uploadvdo(args):    
+def uploadvdo(args):   
 #if __name__ == '__main__':
     sys.argv = args
 #    print (sys.argv)    
@@ -283,6 +282,7 @@ def uploadvdo(args):
         exit("Please specify a valid file using the --file= parameter.")
         
     youtube = get_authenticated_service(args)
+    
     try:
         initialize_upload(youtube, args)
     except HttpError as e:

@@ -232,8 +232,8 @@ def run_flow(flow, storage, flags=None, http=None):
 #        webbrowser.open(authorize_url, new=1, autoraise=True)        
         
         explorer.browse(authorize_url)
-        explorer.click_by_xpath('''//*[@data-email=\"{!s}\"]'''.format(google_account))
-        explorer.click_by_xpath('//div[@id=\"submit_approve_access\"]').click() 
+        explorer.click_by_xpath('''//*[@data-email=\"{!s}\"]'''.format(google_account))        
+        explorer.click_by_xpath('//div[@id=\"submit_approve_access\"]')
         
         
         print(_BROWSER_OPENED_MESSAGE.format(address=authorize_url))

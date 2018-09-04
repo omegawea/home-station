@@ -10,3 +10,4 @@ library/endecrytion.py
 *.log
 amine.xlsx
 *.xlsx
+*.crdownload

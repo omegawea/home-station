@@ -95,10 +95,11 @@ def radioul():
     # load playlist from youtube
     try:
         playlist = listvdos()
+        xprint ('playlist: ', playlist)
     except Exception as e:
         xprint (e)
         return
-    # Upload mp4 to youtube
+# Upload mp4 to youtube
     files = os.listdir('.')
     for file in files:
         # focus on mp4 file for youtube
@@ -133,7 +134,7 @@ def radioconv():
     # initialize upload process if not exist
     global RadioProcesses
     if 'radioul' not in RadioProcesses:
-        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(6, 30, 0), 3600 * 24)
+        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(13, 0, 0), 3600 * 4)
     radiounziprename()
     # Convert mp3 to x2 mp3
     files = os.listdir('.')
@@ -206,7 +207,7 @@ def radiodl():
     # initialize File conversion process if not exist
     global RadioProcesses    
     if 'radioconv' not in RadioProcesses:
-        RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(6, 0, 0), 3600 * 24)
+        RadioProcesses['radioconv'] = HomeProcess(radioconv, datetime.time(12, 0, 0), 3600 * 4)
     # initialize parameters
     hostname = 'http://' + decrypt('ggx.hfsytsjxj.fxnf/')
     topic = 'forum-118-1.html'
@@ -222,6 +223,7 @@ def radiodl():
     # load playlist from youtube
     try:
         playlist = listvdos()
+        xprint ('playlist: ', playlist)
     except Exception as e:
         xprint (e)
         return    
@@ -271,8 +273,8 @@ def radioeps(youtubeacc):
         return
         
     global RadioProcesses
-    if 'radiodl' not in RadioProcesses:
-        RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(5, 0, 0), 3600 * 24)
+#    if 'radiodl' not in RadioProcesses:
+#        RadioProcesses['radiodl'] = HomeProcess(radiodl, datetime.time(11, 0, 0), 3600 * 4)
 
-#    if 'radioul' not in RadioProcesses:
-#        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(5, 10, 0), 3600 * 24)
+    if 'radioul' not in RadioProcesses:
+        RadioProcesses['radioul'] = HomeProcess(radioul, datetime.time(0, 0, 0), 3600 * 24)

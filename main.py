@@ -18,7 +18,7 @@ from library.radioeps import *
 def initHome(args):
     HomeProcesses = {}
 #    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 1800, filename)
-    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(23, 59, 59), 3600 * 4, SPREADSHEET_ID)
+    HomeProcesses['aminebt'] = HomeProcess(aminebt, datetime.time(0, 0, 0), 3600 * 4, SPREADSHEET_ID)
     HomeProcesses['radioeps'] = HomeProcess(radioeps, datetime.time(0, 0, 0), 3600 * 24, args[1])
     return HomeProcesses
 #%%
